@@ -4,7 +4,7 @@ Build a kubernetes system with Google Cloud service.
 - FastApi application in **server** folder.
 - Pubsub messages system is written by Python in **worker** folder.
 - Kubernetes configuration files in **k8s** folder.
-- Status: **To be continute...**
+- Status: **Doing**
   
 **My diagram:**
   
