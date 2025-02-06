@@ -1,5 +1,5 @@
 # multi-k8s
-Build a kubernetes system with Google Cloud service.
+Build a microservie system using kubernetes with Google Cloud service.
 - ReactJS for frontend in **client** folder.
 - FastApi application in **server** folder.
 - Pubsub messages system is written by Python in **worker** folder.
