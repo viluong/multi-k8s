@@ -41,27 +41,5 @@ spec:
                 secretKeyRef:
                   name: env
                   key: PG_DATABASE
-        - name: init-db
-          image: postgres
-          env:
-          - name: POSTGRES_DB
-            valueFrom:
-              secretKeyRef:
-                name: env
-                key: PG_DATABASE
-          - name: POSTGRES_USER
-            valueFrom:
-              secretKeyRef:
-                name: env
-                key: PG_USER
-          - name: POSTGRES_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: env
-                key: PG_PASSWORD
-          command:
-            - sh
-            - -c
-            - |
-              PGPASSWORD=$POSTGRES_PASSWORD psql -h postgres-cluster-ip-service -U $POSTGRES_USER -tc "SELECT 1 FROM pg_database WHERE datname = '$POSTGRES_DB';" | grep -q 1 || \
-              PGPASSWORD=$POSTGRES_PASSWORD psql -h postgres-cluster-ip-service -U $POSTGRES_USER -c "CREATE DATABASE \"$POSTGRES_DB\";"
+            - name: POSTGRES_INITDB_ARGS
+              value: "--auth-host=md5"
