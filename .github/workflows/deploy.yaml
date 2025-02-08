@@ -95,8 +95,6 @@ jobs:
         run: |
           docker push ${{ secrets.DOCKER_HUB_USERNAME }}/multi-client:latest
           docker push ${{ secrets.DOCKER_HUB_USERNAME }}/multi-client:${{ github.sha }}
-          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/multi-nginx:latest
-          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/multi-nginx:${{ github.sha }}
           docker push ${{ secrets.DOCKER_HUB_USERNAME }}/multi-server:latest
           docker push ${{ secrets.DOCKER_HUB_USERNAME }}/multi-server:${{ github.sha }}
           docker push ${{ secrets.DOCKER_HUB_USERNAME }}/multi-worker:latest
