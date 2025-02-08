@@ -1,17 +1,35 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: server-deployment
+  name: migration-deployment
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
-      component: server
+      component: migration
   template:
     metadata:
       labels:
-        component: server
+        component: migration
     spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: postgres
+          env:
+            - name: POSTGRES_HOST
+              value: postgres-cluster-ip-service
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: env
+                  key: PG_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: env
+                  key: PG_PASSWORD
+          command: [ "sh", "-c", "until pg_isready -h $POSTGRES_HOST -U $POSTGRES_USER; do echo waiting for database; sleep 2; done;" ]
+
       containers:
         - name: migration-db
           image: ticokene20/multi-server
@@ -39,7 +57,4 @@ spec:
               secretKeyRef:
                 name: env
                 key: PG_DATABASE
-          command:
-            - sh
-            - -c
-            - alembic upgrade head
+          command: ["alembic", "upgrade", "head"]
