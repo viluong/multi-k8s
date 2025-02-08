@@ -12,37 +12,6 @@ spec:
       labels:
         component: server
     spec:
-      initContainers:
-        - name: migration-db
-          image: ticokene20/multi-server
-          env:
-          - name: REDIS_HOST
-            value: redis-cluster-ip-service
-          - name: REDIS_PORT
-            value: '6379'
-          - name: PG_HOST
-            value: postgres-cluster-ip-service
-          - name: PG_PORT
-            value: '5432'
-          - name: PG_USER
-            valueFrom:
-              secretKeyRef:
-                name: env
-                key: PG_USER
-          - name: PG_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: env
-                key: PG_PASSWORD
-          - name: PG_DATABASE
-            valueFrom:
-              secretKeyRef:
-                name: env
-                key: PG_DATABASE
-          command:
-            - sh
-            - -c
-            - alembic upgrade head
       containers:
         - name: server
           image: ticokene20/multi-server
