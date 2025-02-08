@@ -89,7 +89,7 @@ jobs:
         run: | 
           docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/multi-client:latest -t ${{ secrets.DOCKER_HUB_USERNAME }}/multi-client:${{ github.sha }} -f ./client/Dockerfile ./client
           docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/multi-server:latest -t ${{ secrets.DOCKER_HUB_USERNAME }}/multi-server:${{ github.sha }} -f ./server/Dockerfile ./server
-          docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/multi-worker:latest -t ${{ secrets.DOCKER_HUB_USERNAME }}/multi-worker:${{ github.sha }} -f ./worker/Dockerfile g./worker
+          docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/multi-worker:latest -t ${{ secrets.DOCKER_HUB_USERNAME }}/multi-worker:${{ github.sha }} -f ./worker/Dockerfile ./worker
 
       - name: Docker push image
         run: |
