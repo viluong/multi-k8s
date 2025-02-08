@@ -1,4 +1,4 @@
-name: Deploy MultiDocker
+name: Deploy MultiK8s
 on:
   push:
     branches:
@@ -8,120 +8,11 @@ on:
       - master
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-      
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_TOKEN }}
-      
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v3
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-      
-      - name: Fetch enviroment variables for testing
-        run: |
-          echo "PG_USER=${{ secrets.DB_USER_TEST }}" >> ./server/.env
-          echo "PG_HOST=${{ secrets.DB_HOST_TEST }}" >> ./server/.env
-          echo "PG_PORT=${{ secrets.DB_PORT_TEST }}" >> ./server/.env
-          echo "PG_DATABASE=${{ secrets.DB_TEST }}" >> ./server/.env
-          echo "PG_PASSWORD=${{ secrets.DB_PW_TEST }}" >> ./server/.env
-          echo "REDIS_HOST=${{ secrets.REDIS_HOST_TEST }}" >> ./server/.env
-          echo "REDIS_PORT=${{ secrets.REDIS_PORT_TEST }}" >> ./server/.env
-
-      - name: Build for testing
-        run: docker build -t webapp/fastapi-app -f ./server/Dockerfile ./server
-      
-      - name: Save Docker image for testing as artifact
-        run: docker save -o image.tar webapp/fastapi-app
-
-      - name: Upload Docker image image for testing artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: docker-image
-          path: image.tar
-
-      - name: Setup AWS CLI
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y unzip
-
-          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-          unzip awscliv2.zip
-          sudo ./aws/install --update
-          aws --version
-      
-      - name: Fetch environment variables from AWS Parameter Store for production
-        id: fetch-env
-        run: |
-          aws ssm get-parameters-by-path \
-            --path "/multicont-deployment/server/.env/" \
-            --with-decryption \
-            --region ap-southeast-1 \
-            --query "Parameters[*].{Name:Name,Value:Value}" \
-            --output text | awk '{
-                split($1, arr, "/")  
-                key = arr[length(arr)]
-                value = $2
-                print key "=" value
-            }' > ./server/.env
-
-          aws ssm get-parameters-by-path \
-            --path "/multicont-deployment/worker/.env/" \
-            --with-decryption \
-            --region ap-southeast-1 \
-            --query "Parameters[*].{Name:Name,Value:Value}" \
-            --output text | awk '{
-                split($1, arr, "/")  
-                key = arr[length(arr)]
-                value = $2
-                print key "=" value
-            }' > ./worker/.env
-
-          chmod 600 ./server/.env
-          chmod 600 ./worker/.env
-
-      - name: Build multi-image for deployment
-        run: | 
-          docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/multi-client:latest ./client
-          docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/multi-nginx:latest ./nginx
-          docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/multi-server:latest ./server
-          docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/multi-worker:latest ./worker
-
-      - name: Tag docker image
-        run: |
-          docker tag ${{ secrets.DOCKER_HUB_USERNAME }}/multi-client:latest ${{ secrets.DOCKER_HUB_USERNAME }}/multi-client:${{ github.sha }}
-          docker tag ${{ secrets.DOCKER_HUB_USERNAME }}/multi-nginx:latest ${{ secrets.DOCKER_HUB_USERNAME }}/multi-nginx:${{ github.sha }}
-          docker tag ${{ secrets.DOCKER_HUB_USERNAME }}/multi-server:latest ${{ secrets.DOCKER_HUB_USERNAME }}/multi-server:${{ github.sha }}
-          docker tag ${{ secrets.DOCKER_HUB_USERNAME }}/multi-worker:latest ${{ secrets.DOCKER_HUB_USERNAME }}/multi-worker:${{ github.sha }}
-      - name: Docker push image
-        run: |
-          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/multi-client:latest
-          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/multi-client:${{ github.sha }}
-          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/multi-nginx:latest
-          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/multi-nginx:${{ github.sha }}
-          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/multi-server:latest
-          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/multi-server:${{ github.sha }}
-          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/multi-worker:latest
-          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/multi-worker:${{ github.sha }}
-
   test:
     runs-on: ubuntu-latest
-    needs: build
     services:
-      postgresdb:  # This is the service name, but it's not used as a hostname
-        image: postgres:13
+      postgresdb: # This is the service name, but it's not used as a hostname
+        image: postgres
         env:
           POSTGRES_USER: ${{ secrets.DB_USER_TEST }}
           POSTGRES_PASSWORD: ${{ secrets.DB_PW_TEST }}
@@ -137,39 +28,85 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Download Docker image artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: docker-image
-          path: .
-
-      - name: Load Docker image
-        run: docker load -i image.tar
-      
-      - name: Run tests
+      - name: Fetch environment variables for testing
         run: |
-          docker run -e CI=true webapp/fastapi-app:latest pytest
-  
-  deploy:
+          echo "PG_USER=${{ secrets.DB_USER_TEST }}" >> ./server/.env
+          echo "PG_HOST=${{ secrets.DB_HOST_TEST }}" >> ./server/.env
+          echo "PG_PORT=${{ secrets.DB_PORT_TEST }}" >> ./server/.env
+          echo "PG_DATABASE=${{ secrets.DB_TEST }}" >> ./server/.env
+          echo "PG_PASSWORD=${{ secrets.DB_PW_TEST }}" >> ./server/.env
+          echo "REDIS_HOST=${{ secrets.REDIS_HOST_TEST }}" >> ./server/.env
+          echo "REDIS_PORT=${{ secrets.REDIS_PORT_TEST }}" >> ./server/.env
+
+      - name: Build for testing
+        run: docker build --cache-from webapp/fastapi-app -t webapp/fastapi-app -f ./server/Dockerfile ./server
+
+      - name: Run tests
+        run: docker run -e CI=true webapp/fastapi-app:latest pytest
+
+  build_and_deploy:
     runs-on: ubuntu-latest
-    needs: [build, test]
+    needs: test
     if: github.event_name == 'push'
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
 
-      - name: Generate deployment package
-        run: zip -r deploy.zip . -x '*.git*' 'node_modules/*' 'venv/*'
-
-      - name: Deploy to Elastic Beanstalk
-        uses: einaregilsson/beanstalk-deploy@v18
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
         with:
-          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          application_name: multi-docker
-          environment_name: Multi-docker-env
-          existing_bucket_name: elasticbeanstalk-ap-southeast-1-509399619983
-          region: ap-southeast-1
-          version_label: ${{ github.sha }}
-          deployment_package: deploy.zip
-          use_existing_version_if_available: true
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+      
+      - name: Authenticate with GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: "${{ secrets.GKE_SA_KEY }}"
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: multi-k8s-450306
+
+      - name: Configure Docker for GCR
+        run: gcloud auth configure-docker --quiet
+
+      - name: Get GKE Credentials
+        uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: multi-cluster
+          location: us-central1-a
+
+      - name: Fetch Kubernetes Secrets to .env file
+        run: |
+          SECRET_NAME=env
+          kubectl get secret $SECRET_NAME -o json | jq -r '.data | to_entries | .[] | "\(.key)=\(.value | @base64d)"' > ./server/.env
+
+      - name: Build multi-image for deployment
+        run: | 
+          docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/multi-client:latest -t ${{ secrets.DOCKER_HUB_USERNAME }}/multi-client:${{ github.sha }} -f ./client/Dockerfile ./client
+          docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/multi-server:latest -t ${{ secrets.DOCKER_HUB_USERNAME }}/multi-server:${{ github.sha }} -f ./server/Dockerfile ./server
+          docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/multi-worker:latest -t ${{ secrets.DOCKER_HUB_USERNAME }}/multi-worker:${{ github.sha }} -f ./worker/Dockerfile./worker
+
+      - name: Docker push image
+        run: |
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/multi-client:latest
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/multi-client:${{ github.sha }}
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/multi-nginx:latest
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/multi-nginx:${{ github.sha }}
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/multi-server:latest
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/multi-server:${{ github.sha }}
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/multi-worker:latest
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/multi-worker:${{ github.sha }}
+
+      - name: Deploy to Kubernetes
+        run: kubectl apply -f k8s
+
+      - name: Update Kubernetes Deployments
+        run: |
+          kubectl set image deployments/server-deployment server=${{ secrets.DOCKER_HUB_USERNAME }}/multi-server:${{ env.SHA }}
+          kubectl set image deployments/client-deployment client=${{ secrets.DOCKER_HUB_USERNAME }}/multi-client:${{ env.SHA }}
+          kubectl set image deployments/worker-deployment worker=${{ secrets.DOCKER_HUB_USERNAME }}/multi-worker:${{ env.SHA }}
