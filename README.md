@@ -44,7 +44,10 @@ https://cloud.google.com/free
 
 ### CREATE KUBERNETES SECRETS IN GOOGLE CLOUD
 
-1. Go to **Console** feature in **Google Cloud Console** and connect to project.
+1. Go to **Active Cloud Shell** feature in **Google Cloud Console** and connect to project.
+
+![image](https://github.com/user-attachments/assets/6f716474-6d5e-40d1-b92b-c38852a1cb3c)
+
 
 2. Run cmd below to create secrets variable in google cloud
 
@@ -62,11 +65,14 @@ kubectl create secret generic env \
 
 ### INSTALL INGRESS_NGINX WITH HELM
 
-1. Go to **Google Cloud Console**.
- 
-2. Install **Helm** from script in [here](https://helm.sh/docs/intro/install/).
+1. Go to **Active Cloud shell** on **Google Cloud Console**.
 
-3. Install **Ingress-Nginx** with **Helm** in [here] (https://kubernetes.github.io/ingress-nginx/deploy/#quick-start)
+![image](https://github.com/user-attachments/assets/33dd6995-2116-42f2-b11d-bda7700d4388)
+
+ 
+3. Install **Helm** from script in [here](https://helm.sh/docs/intro/install/).
+
+4. Install **Ingress-Nginx** with **Helm** in [here] (https://kubernetes.github.io/ingress-nginx/deploy/#quick-start)
 
 
 ### CREATE KEY FOR PERMISSION USING KUBERNETES ENGINE
@@ -107,14 +113,14 @@ kubectl create secret generic env \
 
 1. Make a small change to your src/App.js file in the greeting text.
 
-In the project root, in your terminal run:
-
-git add.
-git commit -m “testing deployment"
-git push origin main
-Go to your Github Actions and check the status of your build.
-
-The status should eventually return with a green checkmark and show "build passing"
+    In the project root, in your terminal run:
+    
+    git add.
+    git commit -m “testing deployment"
+    git push origin main
+    Go to your Github Actions and check the status of your build.
+    
+    The status should eventually return with a green checkmark and show "build passing"
 
 2. In Google Cloud Console, Go to **Kubernetes Engine > Gateways, Services, Ingress > SERVICES**
 
