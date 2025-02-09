@@ -105,6 +105,6 @@ jobs:
 
       - name: Update Kubernetes Deployments
         run: |
-          kubectl set image deployments/server-deployment server=${{ secrets.DOCKER_HUB_USERNAME }}/multi-server:${{ env.SHA }}
-          kubectl set image deployments/client-deployment client=${{ secrets.DOCKER_HUB_USERNAME }}/multi-client:${{ env.SHA }}
-          kubectl set image deployments/worker-deployment worker=${{ secrets.DOCKER_HUB_USERNAME }}/multi-worker:${{ env.SHA }}
+          kubectl set image deployments/server-deployment server=${{ secrets.DOCKER_HUB_USERNAME }}/multi-server:${{ github.sha }}
+          kubectl set image deployments/client-deployment client=${{ secrets.DOCKER_HUB_USERNAME }}/multi-client:${{ github.sha }}
+          kubectl set image deployments/worker-deployment worker=${{ secrets.DOCKER_HUB_USERNAME }}/multi-worker:${{ github.sha }}
