@@ -69,7 +69,7 @@ jobs:
       - name: Set up gcloud
         uses: google-github-actions/setup-gcloud@v2
         with:
-          project_id: multi-k8s-450306
+          project_id: ${{ secrets.GC_PROJECT_ID }}
 
       - name: Configure Docker for GCR
         run: gcloud auth configure-docker --quiet
@@ -77,8 +77,8 @@ jobs:
       - name: Get GKE Credentials
         uses: google-github-actions/get-gke-credentials@v2
         with:
-          cluster_name: multi-cluster
-          location: us-central1-a
+          cluster_name: ${{ secrets.GC_CLUSTER_NAME }}
+          location: ${{ secrets.GC_CLUSTER_LOCATION }}
 
       - name: Fetch Kubernetes Secrets to .env file
         run: |
