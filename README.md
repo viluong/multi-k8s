@@ -4,7 +4,7 @@ Build a microservie system using kubernetes with Google Cloud service.
 - FastApi application in **server** folder.
 - Pubsub messages system is written by Python in **worker** folder.
 - Kubernetes configuration files in **k8s** folder.
-- Use Github Actions to build CI/CD
+- Use Github Actions to build CI/CD in [this file](https://github.com/viluong/multi-k8s/blob/master/.github/workflows/deploy.yaml)
   
 ### MY DIAGRAM:
 
